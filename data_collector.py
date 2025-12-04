@@ -35,8 +35,11 @@ class TelegramCollector:
             
             # Get messages from last 30 days
             messages_data = []
+            from datetime import timezone
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
+            
             async for message in self.client.iter_messages(channel, limit=1000):
-                if message.date < datetime.now() - timedelta(days=30):
+                if message.date < cutoff_date:
                     break
                 
                 self.db.save_message(
@@ -63,14 +66,17 @@ class TelegramCollector:
                     'forwards': 'sum'
                 }).reset_index()
                 
+                # Flatten the multi-level columns
+                daily_stats.columns = ['date', 'msg_count', 'total_views', 'avg_views', 'total_forwards']
+                
                 for _, row in daily_stats.iterrows():
                     self.db.save_daily_stats(
                         date=row['date'],
                         channel_id=channel_id,
-                        total_messages=int(row['views']['count']),
-                        total_views=int(row['views']['sum']),
-                        total_forwards=int(row['forwards']['sum']),
-                        avg_views=float(row['views']['mean'])
+                        total_messages=int(row['msg_count']),
+                        total_views=int(row['total_views']),
+                        total_forwards=int(row['total_forwards']),
+                        avg_views=float(row['avg_views'])
                     )
             
             print(f"[{datetime.now()}] Data collection completed successfully!")
