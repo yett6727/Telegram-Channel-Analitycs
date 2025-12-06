@@ -46,7 +46,7 @@ class TelegramCollector:
                     message_id=message.id,
                     channel_id=channel_id,
                     date=message.date,
-                    text=message.text[:200] if message.text else '',
+                    text=message.text[:500] if message.text else '',
                     views=message.views,
                     forwards=message.forwards,
                     replies=message.replies.replies if message.replies else 0
@@ -61,22 +61,21 @@ class TelegramCollector:
             # Calculate daily stats
             if messages_data:
                 df = pd.DataFrame(messages_data)
-                daily_stats = df.groupby('date').agg({
-                    'views': ['count', 'sum', 'mean'],
-                    'forwards': 'sum'
-                }).reset_index()
+                daily_groups = df.groupby('date')
                 
-                # Flatten the multi-level columns
-                daily_stats.columns = ['date', 'views_count', 'views_sum', 'views_mean', 'forwards_sum']
-                
-                for index, row in daily_stats.iterrows():
+                for date, group in daily_groups:
+                    total_messages = len(group)
+                    total_views = int(group['views'].sum())
+                    total_forwards = int(group['forwards'].sum())
+                    avg_views = float(group['views'].mean())
+                    
                     self.db.save_daily_stats(
-                        date=row['date'],
+                        date=str(date),
                         channel_id=channel_id,
-                        total_messages=int(row['views_count']),
-                        total_views=int(row['views_sum']),
-                        total_forwards=int(row['forwards_sum']),
-                        avg_views=float(row['views_mean'])
+                        total_messages=total_messages,
+                        total_views=total_views,
+                        total_forwards=total_forwards,
+                        avg_views=avg_views
                     )
             
             print(f"[{datetime.now()}] Data collection completed successfully!")
@@ -106,7 +105,4 @@ class TelegramCollector:
 
 if __name__ == '__main__':
     collector = TelegramCollector()
-    
-    # For first run or testing, use run_once()
-    # For continuous collection, use run_scheduled()
     collector.run_scheduled()
