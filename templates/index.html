@@ -3,66 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Channel Analytics</title>
+    <title>Channel Analytics Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📊 Telegram Channel Analytics</h1>
-            <p class="subtitle">Real-time insights for your Telegram channel</p>
-        </header>
+    <div class="dashboard">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>📊 Analytics</h2>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="overview">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-text">Overview</span>
+                </button>
+                <button class="nav-item" data-tab="subscribers">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-text">Subscribers</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <button onclick="loadData()" class="refresh-btn">
+                    <span>🔄</span> Refresh
+                </button>
+            </div>
+        </aside>
 
-        <div class="overview-cards">
-            <div class="card">
-                <div class="card-title">Channel</div>
-                <div class="card-value" id="channel-title">Loading...</div>
-            </div>
-            <div class="card">
-                <div class="card-title">Members</div>
-                <div class="card-value" id="members-count">-</div>
-            </div>
-            <div class="card">
-                <div class="card-title">Total Posts</div>
-                <div class="card-value" id="total-messages">-</div>
-            </div>
-            <div class="card">
-                <div class="card-title">Total Views</div>
-                <div class="card-value" id="total-views">-</div>
-            </div>
-            <div class="card">
-                <div class="card-title">Avg Views/Post</div>
-                <div class="card-value" id="avg-views">-</div>
-            </div>
-        </div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Overview Tab -->
+            <div id="overview-tab" class="tab-content active">
+                <div class="greeting-section">
+                    <h1 id="greeting-text">Good evening, what's new on @channel?</h1>
+                </div>
 
-        <div class="charts-section">
-            <div class="chart-container">
-                <h2>Daily Views</h2>
-                <div id="views-chart"></div>
-            </div>
+                <div class="stats-grid">
+                    <!-- Subscribers Chart -->
+                    <div class="stat-card large">
+                        <h3>Subscribers - Last 7 Days</h3>
+                        <div id="weekly-subscribers-chart"></div>
+                    </div>
 
-            <div class="chart-container">
-                <h2>Daily Posts</h2>
-                <div id="messages-chart"></div>
-            </div>
+                    <!-- Views Today -->
+                    <div class="stat-card small">
+                        <h3>Views Today</h3>
+                        <div class="stat-value" id="views-today">0</div>
+                        <div class="stat-change" id="views-change">
+                            <span class="change-badge">+0</span>
+                        </div>
+                    </div>
 
-            <div class="chart-container">
-                <h2>Member Growth</h2>
-                <div id="growth-chart"></div>
+                    <!-- Most Viral Post -->
+                    <div class="stat-card small">
+                        <h3>Most Viral Post</h3>
+                        <div class="viral-post" id="viral-post">
+                            <p class="viral-text">Loading...</p>
+                            <div class="viral-stats">
+                                <span>👁️ <strong id="viral-views">0</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="chart-container">
-                <h2>Top Performing Posts</h2>
-                <div id="top-messages"></div>
-            </div>
-        </div>
+            <!-- Subscribers Tab -->
+            <div id="subscribers-tab" class="tab-content">
+                <div class="subscribers-layout">
+                    <!-- Main Chart - Subscribers per Day -->
+                    <div class="stat-card main-chart">
+                        <h3>Subscribers Growth - Last 30 Days</h3>
+                        <div id="monthly-subscribers-chart"></div>
+                    </div>
 
-        <footer>
-            <p>Last updated: <span id="last-update">-</span></p>
-            <button onclick="loadData()" class="refresh-btn">🔄 Refresh Data</button>
-        </footer>
+                    <!-- Most Viral Post that Gained Subscribers -->
+                    <div class="stat-card side-card">
+                        <h3>Top Post for Growth</h3>
+                        <div class="viral-post" id="growth-viral-post">
+                            <p class="viral-text">Loading...</p>
+                            <div class="viral-stats">
+                                <span>👁️ <strong id="growth-viral-views">0</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Views per Day -->
+                    <div class="stat-card medium">
+                        <h3>Views per Day - Last 30 Days</h3>
+                        <div id="monthly-views-chart"></div>
+                    </div>
+
+                    <!-- Weekly Pattern -->
+                    <div class="stat-card medium">
+                        <h3>Average Views by Day of Week</h3>
+                        <div id="weekly-pattern-chart"></div>
+                    </div>
+
+                    <!-- Peak Activity Times -->
+                    <div class="stat-card activity-card">
+                        <h3>Peak Activity Hours</h3>
+                        <div class="activity-times">
+                            <div class="activity-item">
+                                <div class="activity-label">Most Views</div>
+                                <div class="activity-value" id="view-peak-hour">--:00</div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-label">Most Posts</div>
+                                <div class="activity-value" id="post-peak-hour">--:00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script src="/static/script.js"></script>

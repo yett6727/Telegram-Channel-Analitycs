@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify
 from database import Database
 import config
+from datetime import datetime
 
 app = Flask(__name__)
 db = Database(config.DATABASE_PATH)
@@ -15,6 +16,25 @@ def get_overview():
     '''Get overview statistics'''
     stats = db.get_overview_stats()
     return jsonify(stats)
+
+@app.route('/api/greeting')
+def get_greeting():
+    '''Get greeting with channel name'''
+    hour = datetime.now().hour
+    if hour < 12:
+        greeting = "Good morning"
+    elif hour < 18:
+        greeting = "Good afternoon"
+    else:
+        greeting = "Good evening"
+    
+    stats = db.get_overview_stats()
+    channel_name = config.CHANNEL_USERNAME
+    
+    return jsonify({
+        'greeting': greeting,
+        'channel_name': channel_name
+    })
 
 @app.route('/api/daily-stats')
 def get_daily_stats():
@@ -31,6 +51,25 @@ def get_daily_stats():
     
     return jsonify(data)
 
+@app.route('/api/weekly-stats')
+def get_weekly_stats():
+    '''Get last 7 days statistics'''
+    stats = db.get_recent_stats(days=7)
+    
+    data = {
+        'dates': [row[0] for row in reversed(stats)],
+        'members': [0] * len(stats)  # Will be filled by growth data
+    }
+    
+    # Get growth data
+    growth = db.get_channel_growth()
+    if growth:
+        # Match dates with member counts
+        growth_dict = {row[0]: row[1] for row in growth}
+        data['members'] = [growth_dict.get(date, 0) for date in data['dates']]
+    
+    return jsonify(data)
+
 @app.route('/api/top-messages')
 def get_top_messages():
     '''Get top performing messages'''
@@ -39,7 +78,7 @@ def get_top_messages():
     data = [{
         'message_id': row[0],
         'date': row[1],
-        'text': row[2][:100] + '...' if len(row[2]) > 100 else row[2],
+        'text': row[2][:150] + '...' if len(row[2]) > 150 else row[2],
         'views': row[3],
         'forwards': row[4],
         'replies': row[5]
@@ -53,8 +92,32 @@ def get_growth():
     growth = db.get_channel_growth()
     
     data = {
-        'timestamps': [row[0] for row in growth],
+        'dates': [row[0] for row in growth],
         'members': [row[1] for row in growth]
+    }
+    
+    return jsonify(data)
+
+@app.route('/api/views-today')
+def get_views_today():
+    '''Get today's views with comparison'''
+    data = db.get_views_today()
+    return jsonify(data)
+
+@app.route('/api/hourly-activity')
+def get_hourly_activity():
+    '''Get peak activity hours'''
+    data = db.get_hourly_activity()
+    return jsonify(data)
+
+@app.route('/api/weekly-pattern')
+def get_weekly_pattern():
+    '''Get average views by day of week'''
+    pattern = db.get_weekly_pattern()
+    
+    data = {
+        'days': [row[0] for row in pattern],
+        'avg_views': [row[1] for row in pattern]
     }
     
     return jsonify(data)

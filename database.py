@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 class Database:
@@ -139,9 +139,10 @@ class Database:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT timestamp, members_count
+            SELECT DATE(timestamp) as date, MAX(members_count) as members
             FROM channel_info
-            ORDER BY timestamp ASC
+            GROUP BY DATE(timestamp)
+            ORDER BY date ASC
         ''')
         results = cursor.fetchall()
         conn.close()
@@ -182,3 +183,86 @@ class Database:
             'total_views': total_views,
             'avg_views': round(avg_views, 2)
         }
+    
+    def get_views_today(self):
+        '''Get views for today and yesterday'''
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        today = datetime.now().date()
+        yesterday = today - timedelta(days=1)
+        
+        cursor.execute('SELECT total_views FROM daily_stats WHERE date = ?', (today,))
+        today_views = cursor.fetchone()
+        today_views = today_views[0] if today_views else 0
+        
+        cursor.execute('SELECT total_views FROM daily_stats WHERE date = ?', (yesterday,))
+        yesterday_views = cursor.fetchone()
+        yesterday_views = yesterday_views[0] if yesterday_views else 0
+        
+        conn.close()
+        
+        return {
+            'today': today_views,
+            'yesterday': yesterday_views,
+            'difference': today_views - yesterday_views
+        }
+    
+    def get_hourly_activity(self):
+        '''Get average posting and viewing activity by hour'''
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Posting activity by hour
+        cursor.execute('''
+            SELECT strftime('%H', date) as hour, COUNT(*) as count
+            FROM messages
+            GROUP BY hour
+            ORDER BY count DESC
+            LIMIT 1
+        ''')
+        post_peak = cursor.fetchone()
+        
+        # View activity (using message date as proxy)
+        cursor.execute('''
+            SELECT strftime('%H', date) as hour, AVG(views) as avg_views
+            FROM messages
+            GROUP BY hour
+            ORDER BY avg_views DESC
+            LIMIT 1
+        ''')
+        view_peak = cursor.fetchone()
+        
+        conn.close()
+        
+        return {
+            'post_peak_hour': int(post_peak[0]) if post_peak else 0,
+            'view_peak_hour': int(view_peak[0]) if view_peak else 0
+        }
+    
+    def get_weekly_pattern(self):
+        '''Get average views by day of week'''
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT 
+                CASE CAST(strftime('%w', date) AS INTEGER)
+                    WHEN 0 THEN 'Sunday'
+                    WHEN 1 THEN 'Monday'
+                    WHEN 2 THEN 'Tuesday'
+                    WHEN 3 THEN 'Wednesday'
+                    WHEN 4 THEN 'Thursday'
+                    WHEN 5 THEN 'Friday'
+                    WHEN 6 THEN 'Saturday'
+                END as day_name,
+                AVG(views) as avg_views
+            FROM messages
+            GROUP BY strftime('%w', date)
+            ORDER BY strftime('%w', date)
+        ''')
+        
+        results = cursor.fetchall()
+        conn.close()
+        
+        return results

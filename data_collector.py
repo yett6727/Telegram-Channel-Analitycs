@@ -67,16 +67,16 @@ class TelegramCollector:
                 }).reset_index()
                 
                 # Flatten the multi-level columns
-                daily_stats.columns = ['date', 'msg_count', 'total_views', 'avg_views', 'total_forwards']
+                daily_stats.columns = ['date', 'views_count', 'views_sum', 'views_mean', 'forwards_sum']
                 
-                for _, row in daily_stats.iterrows():
+                for index, row in daily_stats.iterrows():
                     self.db.save_daily_stats(
                         date=row['date'],
                         channel_id=channel_id,
-                        total_messages=int(row['msg_count']),
-                        total_views=int(row['total_views']),
-                        total_forwards=int(row['total_forwards']),
-                        avg_views=float(row['avg_views'])
+                        total_messages=int(row['views_count']),
+                        total_views=int(row['views_sum']),
+                        total_forwards=int(row['forwards_sum']),
+                        avg_views=float(row['views_mean'])
                     )
             
             print(f"[{datetime.now()}] Data collection completed successfully!")
