@@ -24,7 +24,7 @@ pip install telethon flask pandas schedule
    - Copy your `API_ID` and `API_HASH`
 
 3. **Configure the application:**
-   Edit `config.py` and add:
+   Edit `config.сonf` and add:
    - Your `API_ID`
    - Your `API_HASH`
    - Your phone number (with country code)
